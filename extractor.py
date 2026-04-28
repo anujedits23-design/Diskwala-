@@ -14,17 +14,26 @@ def is_diskwala(url):
 # 🔥 TeraBox
 def extract_terabox(url):
     api = f"https://terabox-downloader-api.vercel.app/api?url={url}"
-    res = requests.get(api).json()
 
-    return {
-        "title": res.get("filename", "TeraBox File"),
-        "formats": [
-            {"quality": "Default", "url": res.get("download"), "size": 0}
-        ]
-    }
+    try:
+        res = requests.get(api, timeout=10).json()
+        link = res.get("download")
+
+        if not link:
+            raise Exception("No link")
+
+        return {
+            "title": res.get("filename", "TeraBox File"),
+            "formats": [
+                {"quality": "Default", "url": link, "size": 0}
+            ]
+        }
+
+    except Exception as e:
+        print("TeraBox Error:", e)
 
 
-# 🔥 DiskWala bypass
+# 🔥 DiskWala
 def extract_diskwala(url):
     headers = {"User-Agent": "Mozilla/5.0"}
 
@@ -33,7 +42,7 @@ def extract_diskwala(url):
         html = r.text
 
         patterns = [
-            r'href="(https?://[^"]+\.mp4[^"]*)"',
+            r'href="(https?://[^"]+)"',
             r'"file":"(https?://[^"]+)"',
             r'"download":"(https?://[^"]+)"'
         ]
@@ -49,8 +58,9 @@ def extract_diskwala(url):
                         {"quality": "Direct", "url": link, "size": 0}
                     ]
                 }
-    except:
-        pass
+
+    except Exception as e:
+        print("DiskWala Error:", e)
 
     return {
         "title": "DiskWala Link",
@@ -64,7 +74,7 @@ def extract_diskwala(url):
 def extract_ytdlp(url):
     ydl_opts = {
         'quiet': True,
-        'format': 'bestvideo+bestaudio/best',
+        'format': 'best',
         'geo_bypass': True
     }
 
@@ -73,9 +83,9 @@ def extract_ytdlp(url):
 
         formats = []
         for f in info.get("formats", []):
-            if f.get("url") and f.get("height"):
+            if f.get("url"):
                 formats.append({
-                    "quality": f"{f['height']}p",
+                    "quality": str(f.get("height", "Audio")),
                     "url": f["url"],
                     "size": f.get("filesize") or 0
                 })
@@ -97,7 +107,9 @@ def extract_video(url):
 
         return extract_ytdlp(url)
 
-    except:
+    except Exception as e:
+        print("Main Extract Error:", e)
+
         return {
             "title": "Fallback",
             "formats": [
