@@ -1,14 +1,63 @@
 <!DOCTYPE html>
 <html>
-<body style="background:#111;color:white;text-align:center">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Download</title>
 
-<h2>{{ title }}</h2>
+<style>
+body {
+    background: #0f0f0f;
+    color: white;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
 
-<a href="/download?token={{ token }}">
-<button style="padding:15px;font-size:18px">
-Download
-</button>
-</a>
+.card {
+    background: #1c1c1c;
+    padding: 25px;
+    border-radius: 12px;
+    max-width: 400px;
+    margin: auto;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+
+button {
+    background: #00c853;
+    border: none;
+    padding: 15px 25px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    margin-top: 15px;
+}
+
+button:hover {
+    background: #00b248;
+}
+
+.note {
+    margin-top: 15px;
+    font-size: 14px;
+    color: #aaa;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+    <h2>{{ title }}</h2>
+
+    <a href="/download?token={{ token }}">
+        <button>⬇ Download Now</button>
+    </a>
+
+    <div class="note">
+        🔐 Link expires in 48 hours
+    </div>
+</div>
 
 </body>
 </html>
