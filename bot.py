@@ -10,7 +10,7 @@ from extractor import extract_video
 app = Client("diskwala-bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 # 🔧 Global variables
-START_IMG = "https://graph.org/file/7c6e0c3b5d5b6f8c9d.jpg"
+START_IMG = "https://d.uguu.se/zarjAhvx.jpg"
 START_TIME = time.time()
 
 
