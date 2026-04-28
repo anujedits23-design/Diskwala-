@@ -1,13 +1,20 @@
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-import psutil, time
+import psutil
+import time
 import asyncio
 
 from config import *
 from extractor import extract_video
 
-app = Client("bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client("diskwala-bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
+# 🔧 Global variables
+START_IMG = "https://graph.org/file/7c6e0c3b5d5b6f8c9d.jpg"
+START_TIME = time.time()
+
+
+# 🚀 START COMMAND
 @app.on_message(filters.command("start"))
 async def start(client, message):
     text = f"""
@@ -47,7 +54,9 @@ async def start(client, message):
         parse_mode="html"
     )
 
-@app.on_callback_query(filters.regex("help"))
+
+# 📘 HELP CALLBACK
+@app.on_callback_query(filters.regex("^help$"))
 async def help_callback(client, query):
     text = """
 <b>📘 Help & Usage</b>
@@ -72,13 +81,21 @@ Supported:
         [InlineKeyboardButton("🔙 Back", callback_data="back")]
     ])
 
-    await query.message.edit_caption(text, reply_markup=buttons, parse_mode="html")
+    try:
+        await query.message.edit_caption(text, reply_markup=buttons, parse_mode="html")
+    except:
+        await query.message.edit_text(text, reply_markup=buttons, parse_mode="html")
 
-@app.on_callback_query(filters.regex("back"))
+
+# 🔙 BACK BUTTON
+@app.on_callback_query(filters.regex("^back$"))
 async def back(client, query):
+    await query.message.delete()
     await start(client, query.message)
 
-@app.on_callback_query(filters.regex("stats"))
+
+# 📊 STATS CALLBACK
+@app.on_callback_query(filters.regex("^stats$"))
 async def stats(client, query):
     uptime = int(time.time() - START_TIME)
     ram = psutil.virtual_memory().percent
@@ -98,8 +115,13 @@ async def stats(client, query):
         [InlineKeyboardButton("🔙 Back", callback_data="back")]
     ])
 
-    await query.message.edit_caption(text, reply_markup=buttons, parse_mode="html")
+    try:
+        await query.message.edit_caption(text, reply_markup=buttons, parse_mode="html")
+    except:
+        await query.message.edit_text(text, reply_markup=buttons, parse_mode="html")
 
+
+# 🔗 LINK HANDLER
 @app.on_message(filters.text & ~filters.command)
 async def handler(client, message):
     url = message.text.strip()
@@ -108,38 +130,67 @@ async def handler(client, message):
 
     await asyncio.sleep(2)
 
-    data = extract_video(url)
+    try:
+        data = extract_video(url)
+    except Exception as e:
+        await msg.edit(f"❌ Error:\n{str(e)}")
+        return
+
+    if not data.get("formats"):
+        await msg.edit("❌ No downloadable formats found.")
+        return
 
     buttons = []
 
     for f in data["formats"]:
         buttons.append([
             InlineKeyboardButton(
-                f"📥 {f['quality']}",
-                callback_data=f"dl|{f['url']}|{f['size']}"
+                f"📥 {f.get('quality','File')}",
+                callback_data=f"dl|{f.get('url')}|{f.get('size',0)}"
             )
         ])
 
+    # 🌐 Web fallback
     buttons.append([
         InlineKeyboardButton("🌐 Web Download", url=f"{BASE_URL}/generate?url={url}")
     ])
 
-    await msg.edit("🎬 Select Quality:", reply_markup=InlineKeyboardMarkup(buttons))
+    await msg.edit(
+        "🎬 Select Quality:",
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
 
 
+# 📤 DOWNLOAD / UPLOAD HANDLER
 @app.on_callback_query(filters.regex("^dl"))
 async def dl(client, query):
-    _, url, size = query.data.split("|")
-    size = int(size)
+    try:
+        _, url, size = query.data.split("|")
+        size = int(size)
+    except:
+        await query.message.reply("❌ Invalid request")
+        return
 
+    await query.message.edit("⏳ Processing file...")
+
+    # 🧠 Smart decision
     if size and size < MAX_UPLOAD_SIZE:
         try:
-            await client.send_video(query.message.chat.id, url)
-        except:
-            await query.message.reply("Use web download")
+            await client.send_video(
+                chat_id=query.message.chat.id,
+                video=url,
+                caption="✅ Uploaded successfully"
+            )
+        except Exception as e:
+            await query.message.reply(
+                "❌ Upload failed, use download link",
+                reply_markup=InlineKeyboardMarkup(
+                    [[InlineKeyboardButton("📥 Download", url=url)]]
+                )
+            )
     else:
         await query.message.reply(
-            "📥 Large file",
+            "📥 File is large, use download link:",
             reply_markup=InlineKeyboardMarkup(
                 [[InlineKeyboardButton("Download", url=url)]]
             )
@@ -148,4 +199,5 @@ async def dl(client, query):
     await query.message.delete()
 
 
+# ▶️ RUN BOT
 app.run()
