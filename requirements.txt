@@ -4,3 +4,4 @@ flask
 yt-dlp
 requests
 gunicorn
+psutil
