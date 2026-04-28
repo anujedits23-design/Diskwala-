@@ -9,38 +9,23 @@ from extractor import extract_video
 
 app = Client("diskwala-bot", api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
-# 🔧 Global variables
 START_IMG = "https://d.uguu.se/zarjAhvx.jpg"
 START_TIME = time.time()
 
 
-# 🧪 DEBUG LOGGER (IMPORTANT)
-@app.on_message(filters.text)
-async def debug(client, message):
-    print("📩 MSG RECEIVED:", message.text)
-
-
-# 🚀 START COMMAND
+# 🚀 START
 @app.on_message(filters.command("start"))
 async def start(client, message):
-    text = f"""
+    text = """
 <b>🚀 DiskWala Ultra Bot</b>
 
-<blockquote>
-⚡ Fast • Secure • Multi-Platform Downloader
-</blockquote>
+⚡ Fast • Secure • Multi Downloader
 
-🎬 <b>Supported:</b>
+🎬 Supported:
 • YouTube • Instagram • Facebook  
-• TeraBox • DiskWala Links  
+• TeraBox • DiskWala  
 
-✨ <b>Features:</b>
-• 🎬 Quality Selection  
-• 📤 Telegram Upload  
-• 📥 Direct Download  
-• 🔐 Secure Links  
-
-📌 Send any link to start
+📌 Send link to start
 """
 
     buttons = InlineKeyboardMarkup([
@@ -61,55 +46,52 @@ async def start(client, message):
     )
 
 
-# 📘 HELP CALLBACK
+# 📘 HELP
 @app.on_callback_query(filters.regex("^help$"))
 async def help_callback(client, query):
-    text = """
-<b>📘 Help & Usage</b>
+    await query.answer()
 
-Send a link → Choose quality → Download
-"""
+    text = "📘 Send link → Choose quality → Download"
 
-    buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔙 Back", callback_data="back")]
-    ])
-
-    try:
-        await query.message.edit_caption(text, reply_markup=buttons, parse_mode="html")
-    except:
-        await query.message.edit_text(text, reply_markup=buttons, parse_mode="html")
+    await query.message.edit_text(
+        text,
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 Back", callback_data="back")]
+        ])
+    )
 
 
-# 🔙 BACK BUTTON
+# 🔙 BACK
 @app.on_callback_query(filters.regex("^back$"))
 async def back(client, query):
+    await query.answer()
     await query.message.delete()
     await start(client, query.message)
 
 
-# 📊 STATS CALLBACK
+# 📊 STATS
 @app.on_callback_query(filters.regex("^stats$"))
 async def stats(client, query):
+    await query.answer()
+
     uptime = int(time.time() - START_TIME)
     ram = psutil.virtual_memory().percent
     cpu = psutil.cpu_percent()
 
     text = f"""
-<b>📊 Bot Stats</b>
+📊 Bot Stats
 
 ⏱ Uptime: {uptime}s  
 🧠 CPU: {cpu}%  
-💾 RAM: {ram}%  
+💾 RAM: {ram}%
 """
 
-    buttons = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔙 Back", callback_data="back")]
-    ])
-
-    try:
-        await query.message.edit_caption(text, reply_markup=buttons, parse_mode="html")
-    except:
-        await query.message.edit_text(text, reply_markup=buttons, parse_mode="html")
+    await query.message.edit_text(
+        text,
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 Back", callback_data="back")]
+        ])
+    )
 
 
 # 🔗 LINK HANDLER
@@ -119,27 +101,30 @@ async def handler(client, message):
 
     msg = await message.reply("⏳ Processing...")
 
-    await asyncio.sleep(2)
-
     try:
-        data = extract_video(url)
+        loop = asyncio.get_event_loop()
+        data = await loop.run_in_executor(None, extract_video, url)
     except Exception as e:
         await msg.edit(f"❌ Error:\n{str(e)}")
         return
 
     if not data.get("formats"):
-        await msg.edit("❌ No downloadable formats found.")
+        await msg.edit("❌ No formats found")
         return
 
     buttons = []
 
-    for f in data["formats"]:
+    for i, f in enumerate(data["formats"][:5]):
         buttons.append([
             InlineKeyboardButton(
                 f"📥 {f.get('quality','File')}",
-                callback_data=f"dl|{f.get('url')}|{f.get('size',0)}"
+                callback_data=f"dl|{i}"
             )
         ])
+
+    # store formats temporarily
+    app.temp_data = getattr(app, "temp_data", {})
+    app.temp_data[message.chat.id] = data["formats"]
 
     buttons.append([
         InlineKeyboardButton("🌐 Web Download", url=f"{BASE_URL}/generate?url={url}")
@@ -151,13 +136,22 @@ async def handler(client, message):
     )
 
 
-# 📤 DOWNLOAD / UPLOAD HANDLER
+# 📥 DOWNLOAD
 @app.on_callback_query(filters.regex("^dl"))
 async def dl(client, query):
+    await query.answer()
+
     try:
-        _, url, size = query.data.split("|")
-        size = int(size)
-    except:
+        _, index = query.data.split("|")
+        index = int(index)
+
+        formats = app.temp_data.get(query.message.chat.id)
+        file = formats[index]
+
+        url = file["url"]
+        size = file.get("size", 0)
+
+    except Exception as e:
         await query.message.reply("❌ Invalid request")
         return
 
@@ -168,26 +162,25 @@ async def dl(client, query):
             await client.send_video(
                 chat_id=query.message.chat.id,
                 video=url,
-                caption="✅ Uploaded successfully"
+                caption="✅ Uploaded"
             )
         except:
             await query.message.reply(
                 "❌ Upload failed",
-                reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("📥 Download", url=url)]]
-                )
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("📥 Download", url=url)]
+                ])
             )
     else:
         await query.message.reply(
             "📥 File too large",
-            reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton("Download", url=url)]]
-            )
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("Download", url=url)]
+            ])
         )
 
     await query.message.delete()
 
 
-# ▶️ RUN BOT
-print("🚀 Bot starting...")
+print("🚀 Bot running...")
 app.run()
