@@ -2,7 +2,7 @@ API_ID = 34446649
 API_HASH = "8dc570c08d8e35e88fb9bfc73c65d7fa"
 BOT_TOKEN = "8602719743:AAFu2J4o6UedCbrVnDdcCvn5DITPuzNEZZw"
 
-BASE_URL = ""
+BASE_URL = "https://diskwala-i3qy.onrender.com"
 
 LINK_EXPIRY = 172800
 MAX_UPLOAD_SIZE = 100 * 1024 * 1024
