@@ -6,7 +6,7 @@
 
 <style>
 body {
-    background: #0f0f0f;
+    background: linear-gradient(135deg, #0f0f0f, #1a1a1a);
     color: white;
     text-align: center;
     font-family: Arial, sans-serif;
@@ -16,10 +16,17 @@ body {
 .card {
     background: #1c1c1c;
     padding: 25px;
-    border-radius: 12px;
+    border-radius: 14px;
     max-width: 400px;
     margin: auto;
-    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    box-shadow: 0 0 25px rgba(0,0,0,0.6);
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+h2 {
+    font-size: 18px;
+    margin-bottom: 10px;
+    word-wrap: break-word;
 }
 
 button {
@@ -27,20 +34,34 @@ button {
     border: none;
     padding: 15px 25px;
     font-size: 16px;
-    border-radius: 8px;
+    border-radius: 10px;
     cursor: pointer;
     color: white;
     margin-top: 15px;
+    width: 100%;
+    transition: 0.2s;
 }
 
 button:hover {
     background: #00b248;
+    transform: scale(1.03);
 }
 
 .note {
     margin-top: 15px;
-    font-size: 14px;
+    font-size: 13px;
     color: #aaa;
+}
+
+.footer {
+    margin-top: 20px;
+    font-size: 12px;
+    color: #666;
+}
+
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(10px);}
+    to {opacity: 1; transform: translateY(0);}
 }
 </style>
 </head>
@@ -48,14 +69,18 @@ button:hover {
 <body>
 
 <div class="card">
-    <h2>{{ title }}</h2>
+    <h2>📁 {{ title }}</h2>
 
     <a href="/download?token={{ token }}">
         <button>⬇ Download Now</button>
     </a>
 
     <div class="note">
-        🔐 Link expires in 48 hours
+        🔐 Secure link • Expires in 48 hours
+    </div>
+
+    <div class="footer">
+        Powered by DiskWala Ultra
     </div>
 </div>
 
