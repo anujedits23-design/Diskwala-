@@ -1,8 +1,8 @@
-API_ID = 123456
-API_HASH = "your_api_hash"
-BOT_TOKEN = "your_bot_token"
+API_ID = 34446649
+API_HASH = "8dc570c08d8e35e88fb9bfc73c65d7fa"
+BOT_TOKEN = "8610459304:AAEwVyO9aNr1jpTdxYaM4zEtVDHDP7a8igM"
 
-BASE_URL = "https://your-app.onrender.com"
+BASE_URL = ""
 
 LINK_EXPIRY = 172800
 MAX_UPLOAD_SIZE = 100 * 1024 * 1024
