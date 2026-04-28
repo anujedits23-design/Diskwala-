@@ -14,6 +14,12 @@ START_IMG = "https://d.uguu.se/zarjAhvx.jpg"
 START_TIME = time.time()
 
 
+# 🧪 DEBUG LOGGER (IMPORTANT)
+@app.on_message(filters.text)
+async def debug(client, message):
+    print("📩 MSG RECEIVED:", message.text)
+
+
 # 🚀 START COMMAND
 @app.on_message(filters.command("start"))
 async def start(client, message):
@@ -62,19 +68,6 @@ async def help_callback(client, query):
 <b>📘 Help & Usage</b>
 
 Send a link → Choose quality → Download
-
-━━━━━━━━━━━━━━━
-
-⚠️ Limitations:
-• Private links ❌  
-• DRM content ❌  
-
-━━━━━━━━━━━━━━━
-
-Supported:
-• YouTube / Insta / FB  
-• TeraBox  
-• DiskWala  
 """
 
     buttons = InlineKeyboardMarkup([
@@ -107,8 +100,6 @@ async def stats(client, query):
 ⏱ Uptime: {uptime}s  
 🧠 CPU: {cpu}%  
 💾 RAM: {ram}%  
-
-✅ Running Smooth
 """
 
     buttons = InlineKeyboardMarkup([
@@ -150,7 +141,6 @@ async def handler(client, message):
             )
         ])
 
-    # 🌐 Web fallback
     buttons.append([
         InlineKeyboardButton("🌐 Web Download", url=f"{BASE_URL}/generate?url={url}")
     ])
@@ -173,7 +163,6 @@ async def dl(client, query):
 
     await query.message.edit("⏳ Processing file...")
 
-    # 🧠 Smart decision
     if size and size < MAX_UPLOAD_SIZE:
         try:
             await client.send_video(
@@ -181,16 +170,16 @@ async def dl(client, query):
                 video=url,
                 caption="✅ Uploaded successfully"
             )
-        except Exception as e:
+        except:
             await query.message.reply(
-                "❌ Upload failed, use download link",
+                "❌ Upload failed",
                 reply_markup=InlineKeyboardMarkup(
                     [[InlineKeyboardButton("📥 Download", url=url)]]
                 )
             )
     else:
         await query.message.reply(
-            "📥 File is large, use download link:",
+            "📥 File too large",
             reply_markup=InlineKeyboardMarkup(
                 [[InlineKeyboardButton("Download", url=url)]]
             )
@@ -200,4 +189,5 @@ async def dl(client, query):
 
 
 # ▶️ RUN BOT
+print("🚀 Bot starting...")
 app.run()
